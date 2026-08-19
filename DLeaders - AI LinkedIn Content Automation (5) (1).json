@@ -1,0 +1,2661 @@
+{
+  "name": "DLeaders - AI LinkedIn Content Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -688,
+        -496
+      ],
+      "id": "1264673b-e4b6-49ab-a42c-cd61fd800f44",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const includeWords =\n  /\\b(appointed|promoted|promotion|named as|joins|joined|elected|selected as|takes over as|assumes role|wins|won|awarded|honored|honoured|recognized|recognised|achievement|milestone)\\b/i;\n\nconst excludeWords =\n  /\\b(meeting|engages|visit|war|attack|politics|minister|navy|army|cricket|football|match|arrested|dies|death)\\b/i;\n\nreturn items.filter((item) => {\n  const title = item.json.title || '';\n  const description = item.json.contentSnippet || '';\n  const text = `${title} ${description}`;\n\n  return includeWords.test(text) && !excludeWords.test(text);\n \n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -448
+      ],
+      "id": "4b4f8fde-99c7-427e-a12f-db256275dd24",
+      "name": "filtering",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "text": "=Title: {{ $json.title }}\n\nSummary: {{ $json.contentSnippet }}\n\nSource: {{ $json.link }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"is_relevant\": {\n      \"type\": \"boolean\",\n      \"description\": \"Return true only if the story celebrates a real person's notable professional appointment, promotion, award, recognition, business milestone, leadership success, or major career achievement. Return false for politics, military news, meetings, general company news, sports results, advertisements, rumours, or stories without a clear personal professional achievement.\"\n    },\n    \"rejection_reason\": {\n      \"type\": \"string\",\n      \"description\": \"If is_relevant is false, briefly explain why the story is unsuitable for Dleaders. Otherwise return an empty string.\"\n    },\n    \"person_name\": {\n      \"type\": \"string\",\n      \"description\": \"Full name of the person being recognized. If irrelevant or unclear, return an empty string.\"\n    },\n    \"designation\": {\n      \"type\": \"string\",\n      \"description\": \"The person's new designation, promotion, award, recognition, or professional achievement. Do not invent facts.\"\n    },\n    \"company\": {\n      \"type\": \"string\",\n      \"description\": \"Company or organization associated with the achievement. If unclear, return an empty string.\"\n    },\n    \"headline\": {\n      \"type\": \"string\",\n      \"description\": \"If relevant, write a professional uppercase Dleaders headline of maximum 9 words focused on the person's achievement. Otherwise return an empty string.\"\n    },\n    \"supporting_text\": {\n      \"type\": \"string\",\n      \"description\": \"If relevant, write recognition-focused supporting text of maximum 35 words using only supplied facts. Otherwise return an empty string.\"\n    },\n    \"caption\": {\n      \"type\": \"string\",\n      \"description\": \"If relevant, write a professional social media caption of 70 to 100 words recognizing the person's achievement. Do not exaggerate or invent facts. Otherwise return an empty string.\"\n    },\n    \"hashtags\": {\n      \"type\": \"string\",\n      \"description\": \"If relevant, provide 5 to 8 relevant professional hashtags in one line. Otherwise return an empty string.\"\n    },\n    \"source_url\": {\n      \"type\": \"string\",\n      \"description\": \"Return the supplied source URL exactly.\"\n    }\n  },\n  \"required\": [\n    \"is_relevant\",\n    \"rejection_reason\",\n    \"person_name\",\n    \"designation\",\n    \"company\",\n    \"headline\",\n    \"supporting_text\",\n    \"caption\",\n    \"hashtags\",\n    \"source_url\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        -464
+      ],
+      "id": "b7a54842-0016-4aaa-beb4-5decde0d2cef",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": "=openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -208
+      ],
+      "id": "756f8545-dc4b-43fd-b392-8a417e752fb6",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "M5AVoDvemtfH9WXs",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Person Name": "={{ $json.output.person_name }}",
+            "Designation": "={{ $json.output.designation }}",
+            "Company": "={{ $json.output.company }}",
+            "Headline": "={{ $json.output.headline }}",
+            "Supporting Text": "={{ $json.output.supporting_text }}",
+            "Caption": "={{ $json.output.caption }}",
+            "Hashtags": "={{ $json.output.hashtags }}",
+            "Source URL": "={{ $json.output.source_url }}",
+            "Status": "READY_FOR_CANVA"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Person Name",
+              "displayName": "Person Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Designation",
+              "displayName": "Designation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Supporting Text",
+              "displayName": "Supporting Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        -480
+      ],
+      "id": "7d1c9ccf-c91d-4db6-849c-51628340b2fa",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IhTAcXxDgPtNNqp4",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.guid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -480
+      ],
+      "id": "0d8385b4-fa41-45d6-b90c-6a16c5eebe3e",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        208,
+        -464
+      ],
+      "id": "8a2f77a1-1db1-497e-9b6e-c3fc77aff47e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        -464
+      ],
+      "id": "47450262-a837-49ce-87b9-801e8d2e432f",
+      "name": "Wait",
+      "webhookId": "68f24830-c18f-4c1d-908d-0d5950ebb2f4"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=%28appointed%20OR%20promoted%20OR%20joins%20OR%20named%20OR%20wins%20OR%20recognized%29%20%28CEO%20OR%20director%20OR%20president%20OR%20chief%20OR%20founder%20OR%20leader%29%20Pakistan%20when%3A1d&hl=en-PK&gl=PK&ceid=PK%3Aen",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        -496
+      ],
+      "id": "f30ba51c-bb25-469e-bd60-408e32545c55",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba14b98a-f1db-4f0a-850c-cd60a5993184",
+              "leftValue": "={{ $json.output.is_relevant }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -464
+      ],
+      "id": "4a47ae32-0929-4dda-aabf-de576b3c7cc0",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        64
+      ],
+      "id": "d7c7be3a-10ad-4a8f-b5f8-2461f5b14e55",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "W1ClYmOk7r4g8wgQ",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "signature",
+              "cssSelector": "[data-n-a-sg][data-n-a-ts]",
+              "returnValue": "attribute",
+              "attribute": "data-n-a-sg"
+            },
+            {
+              "key": "timestamp",
+              "cssSelector": "[data-n-a-sg][data-n-a-ts]",
+              "returnValue": "attribute",
+              "attribute": "data-n-a-ts"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        64
+      ],
+      "id": "6b1b3d1c-2978-4db9-8305-8e5e92f9bedf",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const responses = $input.all();\nconst sourceItems = $(\"Code in JavaScript5\").all();\n\nreturn responses.map((item, index) => {\n  const sourceData = sourceItems[index]?.json ?? {};\n  const rawResponse = String(item.json.data ?? \"\");\n\n  let originalArticleUrl = \"\";\n\n  try {\n    // Google response ke start se security prefix remove karta hai\n    const cleanResponse = rawResponse.replace(/^\\)\\]\\}'\\s*/, \"\").trim();\n\n    // Outer Google response parse karo\n    const outerData = JSON.parse(cleanResponse);\n\n    // Is field ke andar ek aur JSON string hoti hai\n    const innerResponse = outerData?.[0]?.[2];\n\n    if (typeof innerResponse === \"string\") {\n      const decodedResponse = JSON.parse(innerResponse);\n\n      if (\n        decodedResponse?.[0] === \"garturlres\" &&\n        typeof decodedResponse?.[1] === \"string\"\n      ) {\n        originalArticleUrl = decodedResponse[1];\n      }\n    }\n  } catch (error) {\n    // Decode fail hone par workflow ko stop nahi karega\n  }\n\n  return {\n    json: {\n      ...sourceData,\n      original_article_url: originalArticleUrl,\n      decode_status: originalArticleUrl ? \"SUCCESS\" : \"FAILED\",\n    },\n    pairedItem: {\n      item: index,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        48
+      ],
+      "id": "7409bdb2-ee5c-4cc9-9ffb-e55c32782db9",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "article_image_url",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            },
+            {
+              "key": "fallback_image_url",
+              "cssSelector": "meta[name=\"twitter:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        32
+      ],
+      "id": "fb344a7a-0915-4b16-805e-7d06c6109f60",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const imageItems = $input.all();\nconst sourceItems = $(\"If\").all();\n\nreturn imageItems.map((item, index) => {\n  const sourceData = sourceItems[index]?.json ?? {};\n\n  const articleImage = item.json.article_image_url || \"\";\n  const fallbackImage = item.json.fallback_image_url || \"\";\n  const finalImage = articleImage || fallbackImage;\n\n  return {\n    json: {\n      ...sourceData,\n      article_image_url: articleImage,\n      fallback_image_url: fallbackImage,\n      profile_image_url: finalImage,\n      image_status: finalImage ? \"FOUND\" : \"MISSING\",\n    },\n    pairedItem: {\n      item: index,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        32
+      ],
+      "id": "74bcdeed-344e-437f-9eb6-cdef7d140566",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Source URL": "={{ $json['Source URL'] }}",
+            "Status": "==\"IMAGE_FETCHED\"",
+            "profile_image_url": "={{ $json.profile_image_url }}",
+            "preview_image_url": "={{ $json.article_image_url }}",
+            "linkedin_post_url": ""
+          },
+          "matchingColumns": [
+            "Source URL"
+          ],
+          "schema": [
+            {
+              "id": "Person Name",
+              "displayName": "Person Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Designation",
+              "displayName": "Designation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Supporting Text",
+              "displayName": "Supporting Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preview_image_url",
+              "displayName": "preview_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_post_url",
+              "displayName": "linkedin_post_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1648,
+        32
+      ],
+      "id": "ddb8f84a-c254-453a-84cb-7c1f47bc7530",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IhTAcXxDgPtNNqp4",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item, index) => {\n  const sourceUrl = item.json[\"Source URL\"];\n\n  if (!sourceUrl) {\n    throw new Error(`Item ${index + 1}: Source URL missing hai`);\n  }\n\n  const match = sourceUrl.match(/\\/articles\\/([^?]+)/);\n\n  if (!match) {\n    throw new Error(`Item ${index + 1}: Google News article ID nahi mila`);\n  }\n\n  return {\n    json: {\n      ...item.json,\n      google_news_url: sourceUrl,\n      google_news_id: match[1],\n    },\n    pairedItem: {\n      item: index,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "76a44321-d8c8-4e15-a663-eb44d17823d9",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const htmlItems = $input.all();\nconst sourceItems = $(\"Code in JavaScript4\").all();\n\nreturn htmlItems.map((item, index) => {\n  const sourceData = sourceItems[index]?.json ?? {};\n\n  const signature = item.json.signature;\n  const timestamp = item.json.timestamp;\n  const articleId = sourceData.google_news_id;\n\n  if (!signature || !timestamp || !articleId) {\n    throw new Error(\n      `Item ${index + 1}: signature, timestamp ya Google News ID missing hai`\n    );\n  }\n\n  const requestPayload = [\n    \"Fbv4je\",\n    JSON.stringify([\n      \"garturlreq\",\n      [\n        [\n          \"X\",\n          \"X\",\n          [\"X\", \"X\"],\n          null,\n          null,\n          1,\n          1,\n          \"US:en\",\n          null,\n          1,\n          null,\n          null,\n          null,\n          null,\n          null,\n          0,\n          1\n        ],\n        \"X\",\n        \"X\",\n        1,\n        [1, 1, 1],\n        1,\n        1,\n        null,\n        0,\n        0,\n        null,\n        0\n      ],\n      articleId,\n      Number(timestamp),\n      signature\n    ])\n  ];\n\n  return {\n    json: {\n      ...sourceData,\n      signature,\n      timestamp,\n      f_req: JSON.stringify([[requestPayload]])\n    },\n    pairedItem: {\n      item: index\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        48
+      ],
+      "id": "c7590a43-6694-4b0c-a4de-22d72a861589",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d8a1b8a9-aa9f-40ee-835d-6669049cbd4c",
+              "leftValue": "={{ $json[\"Status\"] }}",
+              "rightValue": "READY_FOR_CANVA",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -688,
+        64
+      ],
+      "id": "9c76ee56-9a1e-48d2-b34d-d17180effe10",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"Source URL\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -272,
+        64
+      ],
+      "id": "dff9b632-1331-4bdd-b6af-85b3f5e4d480",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://news.google.com/_/DotsSplashUi/data/batchexecute?rpcids=Fbv4je",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            {
+              "name": "Referer",
+              "value": " https://news.google.com/"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "f.req",
+              "value": "={{ $json.f_req }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        336,
+        48
+      ],
+      "id": "2955e505-bcb3-44ba-bef2-bd4f002335ed",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f7b1dbc5-73b9-41ba-a8d1-3fbc0532faa6",
+              "leftValue": "={{ $json.original_article_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        48
+      ],
+      "id": "80ca9e94-265c-4a3b-8503-aa35fb2ad7e3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://app.scrapingbee.com/api/v1/?api_key=MO179GEIGXIFM5ERFXZGLP03FCWS62Z13CPBWAJG1F8C5QZRR5WVHF7XBY138TIGCPCFUU8CSXG7YUCQ&url={{ $json.original_article_url }}&render_js=false",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        976,
+        48
+      ],
+      "id": "3d5d4b6a-1f26-4cca-888f-642d679db024",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "content": "Phase 3\nTemplate creation through canva",
+        "width": 342
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        416
+      ],
+      "id": "2c543bbb-de60-4988-8385-52dd8ff1aa9c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "IMAGE_FETCHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "fda8df65-6a46-4f7f-a2d3-450550eb5e19"
+            },
+            {
+              "leftValue": "={{ $json.linkedin_image_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "74cf3843-ba0e-48ae-8c9c-af401f311a5a"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2035bbee-ae33-4cfe-9ffa-3213de4fcd7a",
+      "name": "IF Status Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.profile_image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "344e75a4-060f-4fbe-a937-1993baa805e2",
+      "name": "Download Person Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        416
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1LKFO_NTMqJqF7M07vrSLCGW2SuZYo0w1",
+          "mode": "list",
+          "cachedResultName": "dleaders_logo.png.png",
+          "cachedResultUrl": "https://drive.google.com/file/d/1LKFO_NTMqJqF7M07vrSLCGW2SuZYo0w1/view?usp=drivesdk"
+        },
+        "options": {
+          "binaryPropertyName": "logo"
+        }
+      },
+      "id": "f579a99c-1ec5-48a3-9b50-02b2bdde385b",
+      "name": "Download Logo from Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        16,
+        624
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "2o4KLoUlJpizQTLM",
+          "name": "Google Drive account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "444bf197-82ac-4755-8a3e-5b9efff191ba",
+      "name": "Merge Data into Python",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.file_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1pz9Sz-EpZwW3pMCL6WO_05xs6xoQ0kjr",
+          "mode": "list",
+          "cachedResultName": "DLeaders LinkedIn Images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1pz9Sz-EpZwW3pMCL6WO_05xs6xoQ0kjr"
+        },
+        "options": {}
+      },
+      "id": "f08f892c-8aae-4d49-8c06-7f93cb81c19d",
+      "name": "Upload Image to Google Drive1",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        832,
+        480
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "2o4KLoUlJpizQTLM",
+          "name": "Google Drive account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "id": "c710d7dc-e17d-4db1-803d-e68f8457cebe",
+      "name": "Make File Public1",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1136,
+        512
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "2o4KLoUlJpizQTLM",
+          "name": "Google Drive account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "linkedin_image_url": "=https://drive.google.com/uc?export=view&id={{ $('Upload Image to Google Drive1').item.json.id }}",
+            "linkedin_drive_file_id": "={{ $('Upload Image to Google Drive1').item.json.id }}",
+            "Status": "IMAGE_READY",
+            "profile_image_url": "=",
+            "preview_image_url": "={{ $('Download Person Image').item.json.preview_image_url }}",
+            "linkedin_post_url": "=",
+            "posted_at": "=",
+            "error_message": "=",
+            "Person Name": "={{ $('Google Sheets Trigger5').item.json[\"Person Name\"] }}"
+          },
+          "matchingColumns": [
+            "Person Name"
+          ],
+          "schema": [
+            {
+              "id": "Person Name",
+              "displayName": "Person Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Designation",
+              "displayName": "Designation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Supporting Text",
+              "displayName": "Supporting Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preview_image_url",
+              "displayName": "preview_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_image_url",
+              "displayName": "linkedin_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin_drive_file_id",
+              "displayName": "linkedin_drive_file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin_post_url",
+              "displayName": "linkedin_post_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "posted_at",
+              "displayName": "posted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "867c7bc7-e15c-41e8-84e5-0d819802cfa3",
+      "name": "Update Sheet - IMAGE_READY1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1392,
+        512
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IhTAcXxDgPtNNqp4",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Status": "FAILED_IMAGE",
+            "error_message": "={{ $json.error?.message || $json.error }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Person Name",
+              "displayName": "Person Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Designation",
+              "displayName": "Designation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Supporting Text",
+              "displayName": "Supporting Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preview_image_url",
+              "displayName": "preview_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_image_url",
+              "displayName": "linkedin_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_drive_file_id",
+              "displayName": "linkedin_drive_file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_post_url",
+              "displayName": "linkedin_post_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "posted_at",
+              "displayName": "posted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d6c85027-1fdb-44b0-b367-7a7d30d6eaa0",
+      "name": "Update Sheet - FAILED_IMAGE1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -128,
+        928
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IhTAcXxDgPtNNqp4",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Status": "FAILED_UPLOAD",
+            "error_message": "={{ $json.error?.message || $json.error }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Person Name",
+              "displayName": "Person Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Designation",
+              "displayName": "Designation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Supporting Text",
+              "displayName": "Supporting Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preview_image_url",
+              "displayName": "preview_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_image_url",
+              "displayName": "linkedin_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_drive_file_id",
+              "displayName": "linkedin_drive_file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedin_post_url",
+              "displayName": "linkedin_post_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "posted_at",
+              "displayName": "posted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4ebc8b42-21d4-46ad-bee3-a2d14f25ce4a",
+      "name": "Update Sheet - FAILED_UPLOAD1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        832,
+        992
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IhTAcXxDgPtNNqp4",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        624
+      ],
+      "id": "03664907-b794-41b5-8abe-b08668c0f9cc",
+      "name": "Google Sheets Trigger5",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "W1ClYmOk7r4g8wgQ",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mechanisms-poor-records-deadline.trycloudflare.com/generate-image",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "person_image",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "logo ",
+              "inputDataFieldName": "logo"
+            },
+            {
+              "name": "person_name",
+              "value": "={{ $json['Person Name'] }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        608,
+        528
+      ],
+      "id": "fbef6fbc-1007-4eee-9185-5dfa9e4f6e92",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "content": "Phase 1",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        -512
+      ],
+      "id": "9cff741a-d7e6-46f5-b746-c7c396bb2359",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Phase 2",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        48
+      ],
+      "id": "ebcd196f-287e-454d-a5aa-7b9b5de5f581",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk",
+          "mode": "list",
+          "cachedResultName": "DLeaders autoamtion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 216349276,
+          "mode": "list",
+          "cachedResultName": "content info",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xcvj9Xl7fFOWy8Zek2X0n_xN4dmzRS6QLkRs5hP4MCk/edit#gid=216349276"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        1376
+      ],
+      "id": "0b24655c-7e50-4430-bc43-0037bc3082e1",
+      "name": "Google Sheets Trigger6",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "W1ClYmOk7r4g8wgQ",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Phase 4\nLInkedin Automation",
+        "width": 342
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        1168
+      ],
+      "id": "65172659-8c10-46ee-8a24-0e5c37c653b8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5318dd3-52cc-453f-81b7-29ae73f46ab4",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "IMAGE_READY",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        1392
+      ],
+      "id": "ce6c453b-d3ee-44fc-92ca-156b72a0a386",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.linkedin_image_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "48329fbb-03f1-4fb5-856b-fd8c7b8827ca",
+      "name": "Download Generated Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/images?action=initializeUpload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "202607"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"initializeUploadRequest\": {\n    \"owner\": \"urn:li:organization:<DLEADERS_ORGANIZATION_ID>\"\n  }\n}",
+        "options": {}
+      },
+      "id": "7b6e0ff1-f1bd-4386-80d8-40b5e926f7e5",
+      "name": "LinkedIn - Initialize Image Upload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        1344
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BehramvuggIyhobD",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.value.uploadUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "8b6ef3d7-abf3-42f3-9017-ed14d7e7ee0e",
+      "name": "LinkedIn - Upload Image Binary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-commentary",
+              "name": "commentary",
+              "type": "string",
+              "value": "={{ $('Get IMAGE_READY Row').item.json.Caption }}\n\n{{ $('Get IMAGE_READY Row').item.json.Hashtags }}"
+            },
+            {
+              "id": "assign-image-urn",
+              "name": "image_urn",
+              "type": "string",
+              "value": "={{ $('LinkedIn - Initialize Image Upload').item.json.value.image }}"
+            },
+            {
+              "id": "assign-row-number",
+              "name": "row_number",
+              "type": "number",
+              "value": "={{ $('Get IMAGE_READY Row').item.json.row_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5717fea7-0245-48ba-8674-3971f64c292d",
+      "name": "Prepare Post Commentary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "<LINKEDIN_API_VERSION_YYYYMM>"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"author\": \"urn:li:organization:<DLEADERS_ORGANIZATION_ID>\",\n  \"commentary\": {{ JSON.stringify($json.commentary) }},\n  \"visibility\": \"PUBLIC\",\n  \"distribution\": {\n    \"feedDistribution\": \"MAIN_FEED\",\n    \"targetEntities\": [],\n    \"thirdPartyDistributionChannels\": []\n  },\n  \"content\": {\n    \"media\": {\n      \"title\": {{ JSON.stringify($('Get IMAGE_READY Row').item.json.Headline) }},\n      \"id\": {{ JSON.stringify($json.image_urn) }}\n    }\n  },\n  \"lifecycleState\": \"PUBLISHED\",\n  \"isReshareDisabledByAuthor\": false\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "aa072fe1-9b7f-41f6-8761-3b2ef4db9938",
+      "name": "LinkedIn - Create Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-post-success",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 201,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0f1241ee-321e-469a-bf48-963a77868396",
+      "name": "Check Post Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "Status",
+              "type": "string",
+              "value": "POSTED"
+            },
+            {
+              "id": "s2",
+              "name": "linkedin_post_url",
+              "type": "string",
+              "value": "=https://www.linkedin.com/feed/update/{{ $json.headers['x-restli-id'] }}/"
+            },
+            {
+              "id": "s3",
+              "name": "posted_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "s4",
+              "name": "error_message",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "s5",
+              "name": "row_number",
+              "type": "number",
+              "value": "={{ $('Prepare Post Commentary').item.json.row_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5c425ad-bb9d-44f4-b342-6da6dd4a752e",
+      "name": "Build Success Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "Status",
+              "type": "string",
+              "value": "POST_FAILED"
+            },
+            {
+              "id": "f2",
+              "name": "linkedin_post_url",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "f3",
+              "name": "posted_at",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "f4",
+              "name": "error_message",
+              "type": "string",
+              "value": "={{ JSON.stringify($json.body) }}"
+            },
+            {
+              "id": "f5",
+              "name": "row_number",
+              "type": "number",
+              "value": "={{ $('Prepare Post Commentary').item.json.row_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cca1b5bf-0e9a-42be-8615-c269b8cab93c",
+      "name": "Build Failure Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<GOOGLE_SHEET_ID>",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "<GOOGLE_SHEET_TAB_NAME>",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Status": "={{ $json.Status }}",
+            "linkedin_post_url": "={{ $json.linkedin_post_url }}",
+            "posted_at": "={{ $json.posted_at }}",
+            "error_message": "={{ $json.error_message }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "13a6f2aa-6ffa-4fb8-881e-9b38f540fa6b",
+      "name": "Update Sheet - Final Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1424,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "postAs": "organization",
+        "text": "={{ $json.Caption + \"\\n\\n\" + $json.Hashtags }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1760
+      ],
+      "id": "8e769366-dfa0-4c13-a337-a096038f4d42",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "5bmuOn4mqI5UpfTw",
+          "name": "LinkedIn account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtering": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "filtering",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        []
+      ]
+    },
+    "IF Status Check": {
+      "main": [
+        [
+          {
+            "node": "Download Logo from Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download Person Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Person Image": {
+      "main": [
+        [
+          {
+            "node": "Merge Data into Python",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet - FAILED_IMAGE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Logo from Drive": {
+      "main": [
+        [
+          {
+            "node": "Merge Data into Python",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet - FAILED_IMAGE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image to Google Drive1": {
+      "main": [
+        [
+          {
+            "node": "Make File Public1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet - FAILED_UPLOAD1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make File Public1": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - IMAGE_READY1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet - FAILED_UPLOAD1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger5": {
+      "main": [
+        [
+          {
+            "node": "IF Status Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Data into Python": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Upload Image to Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger6": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Download Generated Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Generated Image": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn - Initialize Image Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn - Initialize Image Upload": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn - Upload Image Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn - Upload Image Binary": {
+      "main": [
+        [
+          {
+            "node": "Prepare Post Commentary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Post Commentary": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn - Create Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn - Create Post": {
+      "main": [
+        [
+          {
+            "node": "Check Post Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Post Success": {
+      "main": [
+        [
+          {
+            "node": "Build Success Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Success Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Failure Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - Final Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "119c360a-dc40-467d-9338-a5423814bece",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dfca4a08e73752122e628788ef2d8fc2c085248371ce611ada831d23114bd7ea"
+  },
+  "id": "onNAV2x6d4oFtOW6",
+  "tags": []
+}
